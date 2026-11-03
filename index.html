@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>LG 트윈스 직관 이동비용</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⚾%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <p class="eyebrow">LG TWINS · 2026 → 2027</p>
+      <h1>직관 이동비용 비교</h1>
+      <ul class="meta">
+        <li>출발지 <strong>아산</strong></li>
+        <li>가솔린 승용차</li>
+        <li>2026 실제 경기 18회 (10승 8패)</li>
+        <li>9개 구단 홈·원정 각 1회</li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p class="notice" id="estimate-notice"><span aria-hidden="true">ⓘ</span> 경기 기록은 2026 KBO 실제 결과입니다. 주차비는 공영주차장 기준 <strong>경기 1시간 전 도착 ~ 종료 1시간 후 출발(5시간)</strong>으로 계산했습니다. 거리·톨비·KTX 요금은 추정치이며, 모든 기준값은 <code>js/data.js</code>에서 수정할 수 있습니다.</p>
+
+    <!-- F8 설정 -->
+    <section id="settings" class="panel" aria-labelledby="settings-title">
+      <h2 id="settings-title">설정</h2>
+      <div class="field-grid">
+        <div class="field">
+          <label for="fuelPrice">유가 <span class="unit">원/L</span></label>
+          <input id="fuelPrice" name="fuelPrice" type="number" inputmode="decimal" min="1" step="1" aria-describedby="fuelPrice-error">
+          <span class="error" id="fuelPrice-error" role="alert"></span>
+        </div>
+        <div class="field">
+          <label for="fuelEfficiency">연비 <span class="unit">km/L</span></label>
+          <input id="fuelEfficiency" name="fuelEfficiency" type="number" inputmode="decimal" min="1" step="0.1" aria-describedby="fuelEfficiency-error">
+          <span class="error" id="fuelEfficiency-error" role="alert"></span>
+        </div>
+        <div class="field">
+          <label for="people">인원수 <span class="unit">1~6명</span></label>
+          <input id="people" name="people" type="number" inputmode="numeric" min="1" max="6" step="1" aria-describedby="people-error">
+          <span class="error" id="people-error" role="alert"></span>
+        </div>
+      </div>
+      <p class="hint">승용차는 차 1대 비용(인원 무관), 대중교통은 인원수만큼 곱합니다.</p>
+    </section>
+
+    <!-- 요약 -->
+    <section id="summary" aria-labelledby="summary-title">
+      <h2 id="summary-title" class="sr-only">요약</h2>
+      <div class="cards">
+        <div class="card" id="card-record">
+          <h3>2026 직관 성적</h3>
+          <p class="big"><span id="stat-win">0</span>승 <span id="stat-loss">0</span>패 <span id="stat-draw">0</span>무</p>
+          <p class="sub">승률 <strong id="stat-rate">-</strong> · 미입력 <span id="stat-none">0</span></p>
+        </div>
+        <div class="card card-car" id="card-car">
+          <h3><span class="swatch swatch-car" aria-hidden="true"></span>승용차 연간 <small>2026 실적</small></h3>
+          <p class="big" id="sum-car">-</p>
+          <p class="sub">유류비 + 톨비 + 주차비, 왕복</p>
+        </div>
+        <div class="card card-transit" id="card-transit">
+          <h3><span class="swatch swatch-transit" aria-hidden="true"></span>대중교통 연간 <small>2027 계획</small></h3>
+          <p class="big" id="sum-transit">-</p>
+          <p class="sub">KTX 우선, 인천은 시외버스, 왕복</p>
+        </div>
+        <div class="card card-recommend" id="card-recommend" aria-live="polite">
+          <h3>2027 추천 이동수단</h3>
+          <p class="big" id="recommend-mode">-</p>
+          <p class="sub" id="recommend-text">-</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- F1~F6 경기별 표 -->
+    <section id="games" class="panel" aria-labelledby="games-title">
+      <div class="panel-head">
+        <h2 id="games-title">경기별 왕복 비용 <span class="count">(<span id="game-count">0</span>경기)</span></h2>
+        <button type="button" id="reset-results" class="btn-ghost">실제 기록으로 되돌리기</button>
+      </div>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="경기별 왕복 비용 표 (가로 스크롤)">
+        <table id="game-table">
+          <thead>
+            <tr>
+              <th>날짜</th><th>구분</th><th>상대</th><th>구장</th><th>스코어</th><th>결과</th>
+              <th class="num">유류비</th><th class="num">톨비</th><th class="num">주차비</th><th class="num th-car">승용차 왕복</th>
+              <th>대중교통 경로</th><th class="num th-transit">대중교통 왕복</th><th class="num">차액</th>
+            </tr>
+          </thead>
+          <tbody id="game-rows"></tbody>
+          <tfoot>
+            <tr>
+              <th colspan="6" scope="row">연간 합계</th>
+              <td class="num" id="total-fuel">-</td>
+              <td class="num" id="total-toll">-</td>
+              <td class="num" id="total-parking">-</td>
+              <td class="num" id="total-car">-</td>
+              <td></td>
+              <td class="num" id="total-transit">-</td>
+              <td class="num" id="total-diff">-</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <p class="hint">차액 = 승용차 − 대중교통. <span class="diff-plus">+</span>는 대중교통이, <span class="diff-minus">−</span>는 승용차가 저렴합니다. 수원은 주말 경기가 없어 공휴일인 6/3(수, 지방선거일) 경기로 대체했습니다. 경기는 각 구장의 2026 시즌 첫 토·일 경기(없으면 첫 공휴일 경기)입니다.</p>
+    </section>
+
+    <!-- F6 구장별 집계 + F9 차트 -->
+    <section id="stadiums" class="panel" aria-labelledby="stadiums-title">
+      <h2 id="stadiums-title">구장별 비교</h2>
+      <div class="legend" aria-hidden="true">
+        <span><span class="swatch swatch-car"></span>승용차</span>
+        <span><span class="swatch swatch-transit"></span>대중교통</span>
+      </div>
+      <div id="stadium-chart" class="chart" role="img" aria-label="구장별 승용차와 대중교통 왕복 비용 막대 차트"></div>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="구장별 비교 표">
+        <table id="stadium-table">
+          <thead>
+            <tr><th>구장</th><th class="num">횟수</th><th class="num">승용차 합</th><th class="num">대중교통 합</th><th class="num">차액</th><th>주차 기준 (1회, 5시간)</th></tr>
+          </thead>
+          <tbody id="stadium-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- F7 결론 / F10 정성 요소 -->
+    <section id="conclusion" class="panel" aria-labelledby="conclusion-title">
+      <h2 id="conclusion-title">결론</h2>
+      <p id="conclusion-text" class="conclusion">-</p>
+      <p class="break-even">손익분기 인원 <strong id="break-even">-</strong></p>
+      <h3>비용 외 고려사항</h3>
+      <ul id="qualitative" class="qual">
+        <li>야간경기(18:30) 종료 후 대구·광주·부산·창원은 당일 KTX 막차를 타기 어려울 수 있습니다.</li>
+        <li>수원역 정차 KTX는 운행 편수가 적습니다. 대안으로 1호선 전철을 쓸 수 있습니다.</li>
+        <li>KTX 주말(금~일) 요금은 주중보다 높을 수 있으니 실제 예매가로 수정하세요.</li>
+        <li>승용차는 장거리 왕복 운전 피로와 경기 후 주차장 출차 대기가 있습니다.</li>
+        <li>우천 취소나 짐이 많을 때는 승용차가 유연합니다.</li>
+        <li>주차비가 0원인 대전·창원은 경기 시간대 무료 운영 기준입니다. 대전·광주는 출처가 엇갈리는 추정치이며, 유료일 경우 회당 3,000~5,000원이 더 듭니다. 잠실은 2026년 공사로 주차면이 줄어 일찍 만차가 됩니다.</li>
+        <li>2026년 수원 KT 원정은 주말 경기가 없어 공휴일(6/3 지방선거일) 경기로 대체했습니다. 2027년 일정에서도 수원 주말·공휴일 경기가 있는지 확인이 필요합니다.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="wrap site-footer">
+    <p>계산 기준: 모든 비용 왕복 · 유류비 = 편도거리 × 2 ÷ 연비 × 유가</p>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/calc.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

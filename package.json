@@ -1,0 +1,13 @@
+{
+  "name": "lg-twins-travel-cost",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LG 트윈스 직관 이동비용 비교 (2026 승용차 vs 2027 대중교통)",
+  "scripts": {
+    "serve": "python -m http.server 8080",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  }
+}
